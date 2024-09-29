@@ -1,0 +1,5 @@
+RPi.GPIO==0.7.0
+   pygame==2.1.2
+   python-vlc==3.0.18122
+   mutagen==1.45.1
+   
