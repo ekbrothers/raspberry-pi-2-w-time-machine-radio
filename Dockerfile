@@ -10,6 +10,18 @@ RUN apt-get update && apt-get install -y \
     libsdl2-ttf-2.0-0 \
     libfreetype6-dev \
     libportmidi-dev \
+    libjpeg-dev \
+    libtiff5-dev \
+    libwebp-dev \
+    libx11-dev \
+    libxcursor-dev \
+    libxext-dev \
+    libxi-dev \
+    libxinerama-dev \
+    libxrandr-dev \
+    libxss-dev \
+    libxt-dev \
+    libxxf86vm-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

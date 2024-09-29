@@ -1,3 +1,5 @@
 gpiozero
-pygame==2.1.2
+https://github.com/pygame/pygame/releases/download/2.1.2/pygame-2.1.2-cp39-cp39-manylinux_2_17_armv7l.manylinux2014_armv7l.whl ; platform_machine == "armv7l"
+https://github.com/pygame/pygame/releases/download/2.1.2/pygame-2.1.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ; platform_machine == "aarch64"
+pygame==2.1.2 ; platform_machine != "armv7l" and platform_machine != "aarch64"
 dropbox
