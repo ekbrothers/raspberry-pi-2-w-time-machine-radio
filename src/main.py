@@ -1,8 +1,18 @@
 import os
    import random
-   from gpiozero import RotaryEncoder, Button
    import pygame
    import dropbox
+
+   # Use fake-rpi if not on a Raspberry Pi
+   try:
+       from gpiozero import RotaryEncoder, Button
+   except ImportError:
+       print("Running in development mode with mock GPIO")
+       import sys
+       import fake_rpi
+       sys.modules['RPi'] = fake_rpi.RPi
+       sys.modules['RPi.GPIO'] = fake_rpi.RPi.GPIO
+       from gpiozero import RotaryEncoder, Button
 
    # Dropbox configuration (you'll need to set this up)
    DROPBOX_ACCESS_TOKEN = 'YOUR_DROPBOX_ACCESS_TOKEN'

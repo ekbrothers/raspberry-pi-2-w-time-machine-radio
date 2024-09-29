@@ -1,5 +1,4 @@
-RPi.GPIO==0.7.0
+gpiozero==1.6.2
    pygame==2.1.2
-   python-vlc==3.0.18122
-   mutagen==1.45.1
-   
+   dropbox==11.36.2
+   RPi.GPIO==0.7.1
