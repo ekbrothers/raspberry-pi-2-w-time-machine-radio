@@ -15,9 +15,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install RPi.GPIO only on ARM architectures
+# Install gpiozero only on ARM architectures
 RUN if [ "$(uname -m)" = "armv7l" ] || [ "$(uname -m)" = "aarch64" ]; then \
-        pip install RPi.GPIO; \
+        pip install gpiozero; \
     else \
         pip install fake-rpi; \
     fi
