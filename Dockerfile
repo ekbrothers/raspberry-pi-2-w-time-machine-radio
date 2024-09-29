@@ -11,15 +11,17 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
+# Copy requirements file
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY src/ .
+# Install Python dependencies
+RUN pip3 install -r requirements.txt
 
-# Create a directory for audio files
-RUN mkdir -p /app/audio
+# Copy the Python script
+COPY main.py .
+
+# Copy the test audio file
+COPY test_audio.mp3 /app/audio/
 
 # Run the application
 CMD ["python3", "main.py"]
