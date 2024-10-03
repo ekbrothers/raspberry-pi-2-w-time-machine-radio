@@ -259,17 +259,27 @@ To set up Docker and run the Time Machine Radio on your Raspberry Pi, follow the
    docker --version
    ```
 
-8. Pull the latest Time Machine Radio image:
+8. Authenticate with GitHub Container Registry:
+   - Create a Personal Access Token (PAT) on GitHub with the appropriate permissions (read:packages).
+   - Log in to ghcr.io using your GitHub username and PAT:
+     ```
+     echo YOUR_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+     ```
+   Replace YOUR_PAT with your actual Personal Access Token and YOUR_GITHUB_USERNAME with your GitHub username.
+
+9. Pull the latest Time Machine Radio image:
    ```
    docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
    ```
 
-9. Run the Time Machine Radio container:
-   ```
-   docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-   ```
+10. Run the Time Machine Radio container:
+    ```
+    docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
+    ```
 
 Make sure your audio files are organized in `/home/pi/audio` with subdirectories for each decade before running the container.
+
+Note: Keep your Personal Access Token secure and never share it publicly. If you're distributing this project to others, you may want to consider making the container registry public or providing separate instructions for requesting access.
 
 ## Deployment
 
