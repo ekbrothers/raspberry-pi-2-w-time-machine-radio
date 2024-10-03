@@ -218,6 +218,59 @@ If you encounter issues:
 
 If problems persist, consult the BossDAC documentation or contact their support for further assistance.
 
+# Docker Setup on Raspberry Pi
+
+To set up Docker and run the Time Machine Radio on your Raspberry Pi, follow these steps:
+
+1. Update your Raspberry Pi:
+   ```
+   sudo apt update
+   sudo apt upgrade -y
+   ```
+
+2. Install Docker dependencies:
+   ```
+   sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+   ```
+
+3. Add Docker's official GPG key:
+   ```
+   curl -fsSL https://download.docker.com/linux/raspbian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+   ```
+
+4. Set up the Docker repository:
+   ```
+   echo "deb [arch=armhf signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/raspbian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+   ```
+
+5. Install Docker:
+   ```
+   sudo apt update
+   sudo apt install -y docker-ce docker-ce-cli containerd.io
+   ```
+
+6. Add your user to the Docker group (log out and back in after this step):
+   ```
+   sudo usermod -aG docker $USER
+   ```
+
+7. Verify Docker installation:
+   ```
+   docker --version
+   ```
+
+8. Pull the latest Time Machine Radio image:
+   ```
+   docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
+   ```
+
+9. Run the Time Machine Radio container:
+   ```
+   docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
+   ```
+
+Make sure your audio files are organized in `/home/pi/audio` with subdirectories for each decade before running the container.
+
 ## Deployment
 
 To deploy on your Raspberry Pi:
