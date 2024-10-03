@@ -360,5 +360,151 @@ Remember to install the necessary Python libraries (`sounddevice`, `numpy`) in y
 ```bash
 pip install sounddevice numpy
 ```
+## Development and Testing Stages
 
-By following these steps, you ensure that your Python script uses the correct audio device, allowing you to take full advantage of your BossDAC or any other specific audio hardware you're using with your Raspberry Pi.
+When developing the Time Machine Radio project, it's important to balance speed of development with the robustness of your testing environment. Here's a recommended approach that progresses from rapid local development to full containerization:
+
+### 1. Local Python Development on Raspberry Pi
+
+**Fastest for initial development and debugging**
+
+- Develop and test Python scripts directly on the Raspberry Pi.
+- Use a virtual environment to manage dependencies.
+- Pros:
+  - Immediate feedback
+  - Direct access to hardware (GPIO, DAC)
+  - Easiest to debug hardware interactions
+- Cons:
+  - Less portable
+  - Potential for environment inconsistencies
+
+Example workflow:
+```bash
+cd ~/time_machine_radio
+source venv/bin/activate
+python your_script.py
+```
+
+### 2. Local Container Build on Raspberry Pi
+
+**Good balance of speed and environment consistency**
+
+- Build Docker container on the Raspberry Pi itself.
+- Test the containerized application locally.
+- Pros:
+  - Faster than pulling from remote registry
+  - Tests containerization without network dependency
+  - Closer to production environment
+- Cons:
+  - Slower than direct Python development
+  - May not catch architecture-specific issues
+
+Example workflow:
+```bash
+docker build -t time-machine-radio .
+docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio time-machine-radio
+```
+
+### 3. Full CI/CD Pipeline with Remote Container Registry
+
+**Best for final testing and deployment**
+
+- Push changes to GitHub repository.
+- Allow CI/CD pipeline to build and push container to GitHub Container Registry.
+- Pull and run the container on Raspberry Pi.
+- Pros:
+  - Full test of entire workflow
+  - Ensures consistency across different devices
+  - Mimics the final deployment process
+- Cons:
+  - Slowest development cycle
+  - Requires network connectivity
+
+Example workflow:
+```bash
+# After pushing changes to GitHub and CI/CD completes
+docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
+docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
+```
+
+### Recommended Development Progression
+
+1. Start with local Python development for rapid prototyping and hardware integration.
+2. Once basic functionality is established, move to local container builds to test containerization.
+3. After confirming local container functionality, push to the repository and use the full CI/CD pipeline for final testing and deployment.
+
+This staged approach allows you to balance development speed with thorough testing, ensuring that your Time Machine Radio project is both functional and deployable.
+
+## Local Python Environment Setup
+
+When developing Python projects, it's crucial to use virtual environments to manage dependencies and isolate your project from other Python applications. This is especially important for projects like the Time Machine Radio that have specific hardware and software requirements.
+
+### Understanding Virtual Environments
+
+A virtual environment is a self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages. Using virtual environments allows you to:
+
+- Install packages without affecting other Python projects or your system Python installation.
+- Easily share your project with others by providing a `requirements.txt` file.
+- Ensure consistency between development and production environments.
+
+### Setting Up a Virtual Environment
+
+1. **Install venv** (if not already available):
+   ```bash
+   sudo apt-get update
+   sudo apt-get install python3-venv
+   ```
+
+2. **Create a new virtual environment**:
+   Navigate to your project directory and run:
+   ```bash
+   python3 -m venv venv
+   ```
+   This creates a new directory called `venv` in your project folder.
+
+3. **Activate the virtual environment**:
+   ```bash
+   source venv/bin/activate
+   ```
+   Your prompt should change to indicate that the virtual environment is active.
+
+4. **Install required packages**:
+   With the virtual environment activated, install your project's dependencies:
+   ```bash
+   pip install sounddevice numpy soundfile requests
+   ```
+   Or if you have a `requirements.txt` file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Deactivate the virtual environment**:
+   When you're done working on your project, you can deactivate the virtual environment:
+   ```bash
+   deactivate
+   ```
+
+### Managing Dependencies
+
+- **Freeze requirements**: After installing all necessary packages, create or update your `requirements.txt`:
+  ```bash
+  pip freeze > requirements.txt
+  ```
+
+- **Install from requirements**: To recreate the environment on another machine or after a fresh clone:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### Best Practices
+
+- Always activate your virtual environment before working on your project.
+- Keep your `requirements.txt` file up to date.
+- Don't version control your `venv` directory; add it to your `.gitignore` file.
+- If you're using an IDE like PyCharm or VS Code, configure it to use your virtual environment.
+
+### Troubleshooting
+
+- If you encounter permissions issues, ensure you're not using `sudo` with pip inside a virtual environment.
+- If you're having trouble with audio or GPIO libraries, make sure they're compiled for your specific Raspberry Pi architecture.
+
