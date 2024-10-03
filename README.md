@@ -296,3 +296,69 @@ To deploy on your Raspberry Pi:
    ```
 
 Ensure your audio files are organized in `/home/pi/audio` with subdirectories for each decade.
+
+## Specifying the Correct Audio Device in Python
+
+When working with the BossDAC or any specific audio device on your Raspberry Pi, it's crucial to specify the correct device in your Python script. Here's how to do it:
+
+1. **Identify Available Devices**: 
+   Use the following Python script to list all available audio devices:
+
+   ```python
+   import sounddevice as sd
+
+   print("Available audio devices:")
+   print(sd.query_devices())
+   ```
+
+2. **Specify the Device**:
+   Once you've identified your DAC (usually listed as "BossDAC" or similar), you can specify it in your script using its index or name:
+
+   ```python
+   import sounddevice as sd
+   import numpy as np
+
+   # Specify the audio device to use (replace 0 with the correct index if different)
+   device = 0  # or use the name, e.g., device = "BossDAC"
+
+   # Your audio data and sample rate
+   data = ...  # Your audio data
+   samplerate = 44100  # or whatever is appropriate for your audio
+
+   # Play audio
+   sd.play(data, samplerate, device=device)
+   sd.wait()
+   ```
+
+3. **Handle Device Selection Errors**:
+   It's good practice to handle potential errors when selecting the device:
+
+   ```python
+   try:
+       sd.play(data, samplerate, device=device)
+       sd.wait()
+   except sd.PortAudioError as e:
+       print(f"Error playing audio: {e}")
+       print("Available devices:")
+       print(sd.query_devices())
+   ```
+
+4. **Using with Other Libraries**:
+   If you're using libraries like `pygame` for audio, you may need to set the audio device before initializing:
+
+   ```python
+   import os
+   os.environ['SDL_AUDIODRIVER'] = 'alsa'
+   os.environ['AUDIODEV'] = 'plughw:1,0'  # Replace with your device identifier if different
+
+   import pygame
+   pygame.mixer.init()
+   ```
+
+Remember to install the necessary Python libraries (`sounddevice`, `numpy`) in your project's virtual environment:
+
+```bash
+pip install sounddevice numpy
+```
+
+By following these steps, you ensure that your Python script uses the correct audio device, allowing you to take full advantage of your BossDAC or any other specific audio hardware you're using with your Raspberry Pi.
