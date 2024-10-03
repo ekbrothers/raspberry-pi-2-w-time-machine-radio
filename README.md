@@ -1,22 +1,18 @@
-<!-- vscode-markdown-toc -->
-* 1. [User Interactions](#UserInteractions)
-* 2. [Repository Structure](#RepositoryStructure)
-* 3. [Local Development](#LocalDevelopment)
-* 4. [Workflows](#Workflows)
-* 5. [Hardware Setup](#HardwareSetup)
-* 6. [Deployment](#Deployment)
-
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
-
 # Raspberry Pi Time Machine Radio
 
 This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, allowing users to explore music from different decades using potentiometers for control.
 
-##  1. <a name='UserInteractions'></a>User Interactions
+## Table of Contents
+
+- [User Interactions](#user-interactions)
+- [Repository Structure](#repository-structure)
+- [Local Development](#local-development)
+- [Workflows](#workflows)
+- [Hardware Setup](#hardware-setup)
+- [Setting up the BossDAC](#setting-up-the-bossdac)
+- [Deployment](#deployment)
+
+## User Interactions
 
 1. **Power On/Off**: 
    - Turn the left potentiometer to its far counterclockwise position to toggle the power state of the radio.
@@ -41,7 +37,7 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 
 Note: The far counterclockwise position of each potentiometer acts as a switch, triggering specific actions like power on/off or decade changes.
 
-##  2. <a name='RepositoryStructure'></a>Repository Structure
+## Repository Structure
 
 ```
 raspberry-pi-2-w-time-machine-radio/
@@ -62,7 +58,7 @@ raspberry-pi-2-w-time-machine-radio/
 - `Dockerfile`: Defines the container for both development and production
 - `requirements.txt`: Lists Python dependencies
 
-##  3. <a name='LocalDevelopment'></a>Local Development
+## Local Development
 
 1. Clone the repository:
    ```
@@ -82,7 +78,7 @@ raspberry-pi-2-w-time-machine-radio/
 
 This setup allows for development on non-Raspberry Pi systems by mocking GPIO functionality.
 
-##  4. <a name='Workflows'></a>Workflows
+## Workflows
 
 1. `docker-publish.yml`:
    - Triggers on push to main branch
@@ -95,10 +91,10 @@ This setup allows for development on non-Raspberry Pi systems by mocking GPIO fu
    - Validates image contents and installed packages
    - Ensures the container starts successfully
 
-##  5. <a name='HardwareSetup'></a>Hardware Setup
+## Hardware Setup
 
 - Raspberry Pi Zero 2 W
-- InnoMaker Raspberry Pi HIFI DAC HAT PCM5122
+- BossDAC (ALLO BOSS DAC PCM5122)
 - 2 potentiometers with built-in switches:
   - Left potentiometer: Volume control and power on/off
   - Right potentiometer: Track selection and decade change
@@ -114,9 +110,115 @@ GPIO Connections:
   - DT: GPIO 23
   - SW: GPIO 24
 
-The DAC HAT should be properly seated on the Raspberry Pi's GPIO pins.
+The BossDAC should be properly seated on the Raspberry Pi's GPIO pins.
 
-##  6. <a name='Deployment'></a>Deployment
+## Setting up the BossDAC
+
+### 1. Configure Raspberry Pi
+
+Edit the boot configuration file:
+
+```bash
+sudo nano /boot/firmware/config.txt
+```
+
+Add the following lines at the end of the file:
+
+```
+dtoverlay=allo-boss-dac-pcm512x-audio
+dtparam=i2s=on
+```
+
+If you see `dtparam=audio=on`, comment it out by adding a `#` at the beginning of the line:
+
+```
+#dtparam=audio=on
+```
+
+Save and exit the editor (Ctrl+X, then Y, then Enter).
+
+### 2. Reboot Raspberry Pi
+
+```bash
+sudo reboot
+```
+
+### 3. Verify DAC Recognition
+
+After rebooting, check if the BossDAC is recognized:
+
+```bash
+aplay -l
+```
+
+You should see output similar to:
+
+```
+card 1: BossDAC [BossDAC], device 0: Boss DAC HiFi [Master] pcm512x-hifi-0 [Boss DAC HiFi [Master] pcm512x-hifi-0]
+```
+
+Verify that the driver is loaded:
+
+```bash
+lsmod | grep snd_soc_allo_boss_dac
+```
+
+You should see `snd_soc_allo_boss_dac` in the output.
+
+### 4. Create a Test Sound
+
+Install the `sox` tool if not already present:
+
+```bash
+sudo apt-get update
+sudo apt-get install sox
+```
+
+Create a 5-second test tone:
+
+```bash
+sox -n -r 44100 -c 2 test_tone.wav synth 5 sine 1000
+```
+
+### 5. Test the DAC
+
+Play the test tone through the BossDAC:
+
+```bash
+aplay -D plughw:1,0 test_tone.wav
+```
+
+Or, if you've set the BossDAC as the default audio device:
+
+```bash
+aplay test_tone.wav
+```
+
+You should hear a 5-second beep through your speakers or headphones connected to the BossDAC.
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. Ensure the BossDAC is properly seated on the Raspberry Pi's GPIO pins.
+2. Check that you're using a power supply capable of providing at least 3A.
+3. Verify I2C detection:
+
+   ```bash
+   sudo i2cdetect -y 1
+   ```
+
+   You should see a device detected (usually at address 0x4d).
+
+4. Check system logs for any error messages:
+
+   ```bash
+   dmesg | grep -i boss
+   ```
+
+If problems persist, consult the BossDAC documentation or contact their support for further assistance.
+
+## Deployment
 
 To deploy on your Raspberry Pi:
 
