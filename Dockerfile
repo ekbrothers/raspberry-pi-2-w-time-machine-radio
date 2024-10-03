@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     libsdl2-image-2.0-0 \
     libsdl2-ttf-2.0-0 \
     libfreetype6-dev \
+    libasound2-dev \
+    libpulse-dev \
     libportmidi-dev \
     build-essential \
     python3-dev \
