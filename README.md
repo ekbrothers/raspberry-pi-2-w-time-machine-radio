@@ -508,3 +508,133 @@ A virtual environment is a self-contained directory tree that contains a Python 
 - If you encounter permissions issues, ensure you're not using `sudo` with pip inside a virtual environment.
 - If you're having trouble with audio or GPIO libraries, make sure they're compiled for your specific Raspberry Pi architecture.
 
+# Setting up rclone for Dropbox Sync
+
+This guide will walk you through setting up rclone to sync a specific Dropbox folder to your Raspberry Pi.
+
+## 1. Install rclone on Raspberry Pi
+
+```bash
+sudo apt-get update
+sudo apt-get install rclone
+```
+
+## 2. Configure rclone on a device with a web browser
+
+On a device with a web browser (not the Raspberry Pi):
+
+1. Install rclone: https://rclone.org/install/
+
+2. Open a terminal or command prompt and run:
+   ```
+   rclone config
+   ```
+
+3. Follow the prompts:
+   - Choose 'n' for new remote
+   - Name it 'dropbox'
+   - Choose 'Dropbox' from the list
+   - Leave client_id and client_secret blank
+   - Choose 'n' for advanced config
+   - Choose 'y' for auto config
+   - Log in to Dropbox in the browser window that opens
+   - Confirm that the authentication was successful
+
+4. Once configured, run:
+   ```
+   rclone config show
+   ```
+
+5. Copy the entire 'dropbox' section of the configuration.
+
+## 3. Configure rclone on Raspberry Pi
+
+On your Raspberry Pi:
+
+1. Create the rclone config directory:
+   ```
+   mkdir -p /home/<user_name>/.config/rclone
+   ```
+
+2. Create and edit the config file:
+   ```
+   nano /home/<user_name>/.config/rclone/rclone.conf
+   ```
+
+3. Paste the 'dropbox' configuration you copied from the other device.
+
+4. Save and exit (Ctrl+X, then Y, then Enter).
+
+## 4. Create the sync script
+
+Create a new file:
+
+```bash
+nano /home/<user_name>/sync_dropbox.sh
+```
+
+Paste the following content:
+
+```bash
+#!/bin/bash
+
+# Define variables
+USER_HOME="/home/<user_name>"
+CONFIG_FILE="$USER_HOME/.config/rclone/rclone.conf"
+LOG_FILE="$USER_HOME/rclone_sync.log"
+AUDIO_DIR="$USER_HOME/audio"
+REMOTE_NAME="dropbox:radioTimeMachine"
+
+# Ensure the audio directory exists
+mkdir -p "$AUDIO_DIR"
+
+# Run rclone sync with explicit config file location and recursive flag
+rclone sync "$REMOTE_NAME" "$AUDIO_DIR" --config "$CONFIG_FILE" --progress --recursive --exclude ".*" --log-file="$LOG_FILE"
+
+echo "Sync completed at $(date)" >> "$LOG_FILE"
+
+# Correct ownership if run with sudo
+if [ "$(id -u)" -eq 0 ]; then
+  chown -R <user_name>:<user_name> "$AUDIO_DIR" "$LOG_FILE"
+fi
+```
+
+Save and exit (Ctrl+X, then Y, then Enter).
+
+Make the script executable:
+
+```bash
+chmod +x /home/<user_name>/sync_dropbox.sh
+```
+
+## 5. Test the sync
+
+Run the sync script:
+
+```bash
+/home/<user_name>/sync_dropbox.sh
+```
+
+Check the log file:
+
+```bash
+cat /home/<user_name>/rclone_sync.log
+```
+
+## 6. Set up automatic syncing (optional)
+
+To sync every hour, add a cron job:
+
+```bash
+crontab -e
+```
+
+Add this line:
+
+```
+0 * * * * /home/<user_name>/sync_dropbox.sh
+```
+
+Save and exit.
+
+Your Raspberry Pi will now sync the 'radioTimeMachine' folder from your Dropbox to the local audio directory every hour.
