@@ -1,7 +1,9 @@
-# curl -O https://raw.githubusercontent.com/ekbrothers/raspberry-pi-2-w-time-machine-radio/main/bootstrap_init.sh
-# chmod +x bootstrap_init.sh
-# ./bootstrap_init.sh
-# sudo ./bootstrap_main.sh
+# locally: rclone.exe authorize dropbox
+
+curl -O https://raw.githubusercontent.com/ekbrothers/raspberry-pi-2-w-time-machine-radio/main/bootstrap_init.sh
+chmod +x bootstrap_init.sh
+./bootstrap_init.sh
+sudo ./bootstrap_main.sh
 
 #!/bin/bash
 
