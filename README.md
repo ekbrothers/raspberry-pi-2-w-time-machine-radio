@@ -1,8 +1,31 @@
+<!-- vscode-markdown-toc -->
+* 1. [Table of Contents](#TableofContents)
+* 2. [User Interactions](#UserInteractions)
+* 3. [Repository Structure](#RepositoryStructure)
+* 4. [Local Development](#LocalDevelopment)
+* 5. [Workflows](#Workflows)
+* 6. [Hardware Setup](#HardwareSetup)
+* 7. [Deployment](#Deployment)
+* 8. [Specifying the Correct Audio Device in Python](#SpecifyingtheCorrectAudioDeviceinPython)
+* 9. [Development and Testing Stages](#DevelopmentandTestingStages)
+	* 9.1. [1. Local Python Development on Raspberry Pi](#LocalPythonDevelopmentonRaspberryPi)
+	* 9.2. [2. Local Container Build on Raspberry Pi](#LocalContainerBuildonRaspberryPi)
+	* 9.3. [3. Full CI/CD Pipeline with Remote Container Registry](#FullCICDPipelinewithRemoteContainerRegistry)
+	* 9.4. [Setting Up a Virtual Environment](#SettingUpaVirtualEnvironment)
+	* 9.5. [Managing Dependencies](#ManagingDependencies)
+	* 9.6. [Best Practices](#BestPractices)
+	* 9.7. [Troubleshooting](#Troubleshooting)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 # Raspberry Pi Time Machine Radio
 
 This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, allowing users to explore music from different decades using potentiometers for control.
 
-## Table of Contents
+##  1. <a name='TableofContents'></a>Table of Contents
 
 - [User Interactions](#user-interactions)
 - [Repository Structure](#repository-structure)
@@ -12,7 +35,7 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 - [Setting up the BossDAC](#setting-up-the-bossdac)
 - [Deployment](#deployment)
 
-## User Interactions
+##  2. <a name='UserInteractions'></a>User Interactions
 
 1. **Power On/Off**: 
    - Turn the left potentiometer to its far counterclockwise position to toggle the power state of the radio.
@@ -37,7 +60,7 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 
 Note: The far counterclockwise position of each potentiometer acts as a switch, triggering specific actions like power on/off or decade changes.
 
-## Repository Structure
+##  3. <a name='RepositoryStructure'></a>Repository Structure
 
 ```
 raspberry-pi-2-w-time-machine-radio/
@@ -58,7 +81,7 @@ raspberry-pi-2-w-time-machine-radio/
 - `Dockerfile`: Defines the container for both development and production
 - `requirements.txt`: Lists Python dependencies
 
-## Local Development
+##  4. <a name='LocalDevelopment'></a>Local Development
 
 1. Clone the repository:
    ```
@@ -78,7 +101,7 @@ raspberry-pi-2-w-time-machine-radio/
 
 This setup allows for development on non-Raspberry Pi systems by mocking GPIO functionality.
 
-## Workflows
+##  5. <a name='Workflows'></a>Workflows
 
 1. `docker-publish.yml`:
    - Triggers on push to main branch
@@ -91,7 +114,7 @@ This setup allows for development on non-Raspberry Pi systems by mocking GPIO fu
    - Validates image contents and installed packages
    - Ensures the container starts successfully
 
-## Hardware Setup
+##  6. <a name='HardwareSetup'></a>Hardware Setup
 
 - Raspberry Pi Zero 2 W
 - BossDAC (ALLO BOSS DAC PCM5122)
@@ -112,111 +135,6 @@ GPIO Connections:
 
 The BossDAC should be properly seated on the Raspberry Pi's GPIO pins.
 
-## Setting up the BossDAC
-
-### 1. Configure Raspberry Pi
-
-Edit the boot configuration file:
-
-```bash
-sudo nano /boot/firmware/config.txt
-```
-
-Add the following lines at the end of the file:
-
-```
-dtoverlay=allo-boss-dac-pcm512x-audio
-dtparam=i2s=on
-```
-
-If you see `dtparam=audio=on`, comment it out by adding a `#` at the beginning of the line:
-
-```
-#dtparam=audio=on
-```
-
-Save and exit the editor (Ctrl+X, then Y, then Enter).
-
-### 2. Reboot Raspberry Pi
-
-```bash
-sudo reboot
-```
-
-### 3. Verify DAC Recognition
-
-After rebooting, check if the BossDAC is recognized:
-
-```bash
-aplay -l
-```
-
-You should see output similar to:
-
-```
-card 1: BossDAC [BossDAC], device 0: Boss DAC HiFi [Master] pcm512x-hifi-0 [Boss DAC HiFi [Master] pcm512x-hifi-0]
-```
-
-Verify that the driver is loaded:
-
-```bash
-lsmod | grep snd_soc_allo_boss_dac
-```
-
-You should see `snd_soc_allo_boss_dac` in the output.
-
-### 4. Create a Test Sound
-
-Install the `sox` tool if not already present:
-
-```bash
-sudo apt-get update
-sudo apt-get install sox
-```
-
-Create a 5-second test tone:
-
-```bash
-sox -n -r 44100 -c 2 test_tone.wav synth 5 sine 1000
-```
-
-### 5. Test the DAC
-
-Play the test tone through the BossDAC:
-
-```bash
-aplay -D plughw:1,0 test_tone.wav
-```
-
-Or, if you've set the BossDAC as the default audio device:
-
-```bash
-aplay test_tone.wav
-```
-
-You should hear a 5-second beep through your speakers or headphones connected to the BossDAC.
-
-### Troubleshooting
-
-If you encounter issues:
-
-1. Ensure the BossDAC is properly seated on the Raspberry Pi's GPIO pins.
-2. Check that you're using a power supply capable of providing at least 3A.
-3. Verify I2C detection:
-
-   ```bash
-   sudo i2cdetect -y 1
-   ```
-
-   You should see a device detected (usually at address 0x4d).
-
-4. Check system logs for any error messages:
-
-   ```bash
-   dmesg | grep -i boss
-   ```
-
-If problems persist, consult the BossDAC documentation or contact their support for further assistance.
 
 # Docker Setup on Raspberry Pi
 
@@ -281,7 +199,7 @@ Make sure your audio files are organized in `/home/pi/audio` with subdirectories
 
 Note: Keep your Personal Access Token secure and never share it publicly. If you're distributing this project to others, you may want to consider making the container registry public or providing separate instructions for requesting access.
 
-## Deployment
+##  7. <a name='Deployment'></a>Deployment
 
 To deploy on your Raspberry Pi:
 
@@ -297,7 +215,7 @@ To deploy on your Raspberry Pi:
 
 Ensure your audio files are organized in `/home/pi/audio` with subdirectories for each decade.
 
-## Specifying the Correct Audio Device in Python
+##  8. <a name='SpecifyingtheCorrectAudioDeviceinPython'></a>Specifying the Correct Audio Device in Python
 
 When working with the BossDAC or any specific audio device on your Raspberry Pi, it's crucial to specify the correct device in your Python script. Here's how to do it:
 
@@ -360,11 +278,11 @@ Remember to install the necessary Python libraries (`sounddevice`, `numpy`) in y
 ```bash
 pip install sounddevice numpy
 ```
-## Development and Testing Stages
+##  9. <a name='DevelopmentandTestingStages'></a>Development and Testing Stages
 
 When developing the Time Machine Radio project, it's important to balance speed of development with the robustness of your testing environment. Here's a recommended approach that progresses from rapid local development to full containerization:
 
-### 1. Local Python Development on Raspberry Pi
+###  9.1. <a name='LocalPythonDevelopmentonRaspberryPi'></a>1. Local Python Development on Raspberry Pi
 
 **Fastest for initial development and debugging**
 
@@ -385,7 +303,7 @@ source venv/bin/activate
 python your_script.py
 ```
 
-### 2. Local Container Build on Raspberry Pi
+###  9.2. <a name='LocalContainerBuildonRaspberryPi'></a>2. Local Container Build on Raspberry Pi
 
 **Good balance of speed and environment consistency**
 
@@ -405,7 +323,7 @@ docker build -t time-machine-radio .
 docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio time-machine-radio
 ```
 
-### 3. Full CI/CD Pipeline with Remote Container Registry
+###  9.3. <a name='FullCICDPipelinewithRemoteContainerRegistry'></a>3. Full CI/CD Pipeline with Remote Container Registry
 
 **Best for final testing and deployment**
 
@@ -427,27 +345,9 @@ docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
 docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
 ```
 
-### Recommended Development Progression
 
-1. Start with local Python development for rapid prototyping and hardware integration.
-2. Once basic functionality is established, move to local container builds to test containerization.
-3. After confirming local container functionality, push to the repository and use the full CI/CD pipeline for final testing and deployment.
 
-This staged approach allows you to balance development speed with thorough testing, ensuring that your Time Machine Radio project is both functional and deployable.
-
-## Local Python Environment Setup
-
-When developing Python projects, it's crucial to use virtual environments to manage dependencies and isolate your project from other Python applications. This is especially important for projects like the Time Machine Radio that have specific hardware and software requirements.
-
-### Understanding Virtual Environments
-
-A virtual environment is a self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages. Using virtual environments allows you to:
-
-- Install packages without affecting other Python projects or your system Python installation.
-- Easily share your project with others by providing a `requirements.txt` file.
-- Ensure consistency between development and production environments.
-
-### Setting Up a Virtual Environment
+###  9.4. <a name='SettingUpaVirtualEnvironment'></a>Setting Up a Virtual Environment
 
 1. **Install venv** (if not already available):
    ```bash
@@ -484,7 +384,7 @@ A virtual environment is a self-contained directory tree that contains a Python 
    deactivate
    ```
 
-### Managing Dependencies
+###  9.5. <a name='ManagingDependencies'></a>Managing Dependencies
 
 - **Freeze requirements**: After installing all necessary packages, create or update your `requirements.txt`:
   ```bash
@@ -496,145 +396,15 @@ A virtual environment is a self-contained directory tree that contains a Python 
   pip install -r requirements.txt
   ```
 
-### Best Practices
+###  9.6. <a name='BestPractices'></a>Best Practices
 
 - Always activate your virtual environment before working on your project.
 - Keep your `requirements.txt` file up to date.
 - Don't version control your `venv` directory; add it to your `.gitignore` file.
 - If you're using an IDE like PyCharm or VS Code, configure it to use your virtual environment.
 
-### Troubleshooting
+###  9.7. <a name='Troubleshooting'></a>Troubleshooting
 
 - If you encounter permissions issues, ensure you're not using `sudo` with pip inside a virtual environment.
 - If you're having trouble with audio or GPIO libraries, make sure they're compiled for your specific Raspberry Pi architecture.
 
-# Setting up rclone for Dropbox Sync
-
-This guide will walk you through setting up rclone to sync a specific Dropbox folder to your Raspberry Pi.
-
-## 1. Install rclone on Raspberry Pi
-
-```bash
-sudo apt-get update
-sudo apt-get install rclone
-```
-
-## 2. Configure rclone on a device with a web browser
-
-On a device with a web browser (not the Raspberry Pi):
-
-1. Install rclone: https://rclone.org/install/
-
-2. Open a terminal or command prompt and run:
-   ```
-   rclone config
-   ```
-
-3. Follow the prompts:
-   - Choose 'n' for new remote
-   - Name it 'dropbox'
-   - Choose 'Dropbox' from the list
-   - Leave client_id and client_secret blank
-   - Choose 'n' for advanced config
-   - Choose 'y' for auto config
-   - Log in to Dropbox in the browser window that opens
-   - Confirm that the authentication was successful
-
-4. Once configured, run:
-   ```
-   rclone config show
-   ```
-
-5. Copy the entire 'dropbox' section of the configuration.
-
-## 3. Configure rclone on Raspberry Pi
-
-On your Raspberry Pi:
-
-1. Create the rclone config directory:
-   ```
-   mkdir -p /home/<user_name>/.config/rclone
-   ```
-
-2. Create and edit the config file:
-   ```
-   nano /home/<user_name>/.config/rclone/rclone.conf
-   ```
-
-3. Paste the 'dropbox' configuration you copied from the other device.
-
-4. Save and exit (Ctrl+X, then Y, then Enter).
-
-## 4. Create the sync script
-
-Create a new file:
-
-```bash
-nano /home/<user_name>/sync_dropbox.sh
-```
-
-Paste the following content:
-
-```bash
-#!/bin/bash
-
-# Define variables
-USER_HOME="/home/<user_name>"
-CONFIG_FILE="$USER_HOME/.config/rclone/rclone.conf"
-LOG_FILE="$USER_HOME/rclone_sync.log"
-AUDIO_DIR="$USER_HOME/audio"
-REMOTE_NAME="dropbox:radioTimeMachine"
-
-# Ensure the audio directory exists
-mkdir -p "$AUDIO_DIR"
-
-# Run rclone sync with explicit config file location and recursive flag
-rclone sync "$REMOTE_NAME" "$AUDIO_DIR" --config "$CONFIG_FILE" --progress --recursive --exclude ".*" --log-file="$LOG_FILE"
-
-echo "Sync completed at $(date)" >> "$LOG_FILE"
-
-# Correct ownership if run with sudo
-if [ "$(id -u)" -eq 0 ]; then
-  chown -R <user_name>:<user_name> "$AUDIO_DIR" "$LOG_FILE"
-fi
-```
-
-Save and exit (Ctrl+X, then Y, then Enter).
-
-Make the script executable:
-
-```bash
-chmod +x /home/<user_name>/sync_dropbox.sh
-```
-
-## 5. Test the sync
-
-Run the sync script:
-
-```bash
-/home/<user_name>/sync_dropbox.sh
-```
-
-Check the log file:
-
-```bash
-cat /home/<user_name>/rclone_sync.log
-```
-
-## 6. Set up automatic syncing (optional)
-
-To sync every hour, add a cron job:
-
-```bash
-crontab -e
-```
-
-Add this line:
-
-```
-0 * * * * /home/<user_name>/sync_dropbox.sh
-```
-
-Save and exit.
-
-Your Raspberry Pi will now sync the 'radioTimeMachine' folder from your Dropbox to the local audio directory every hour.
