@@ -2,9 +2,7 @@
 
 curl -O https://raw.githubusercontent.com/ekbrothers/raspberry-pi-2-w-time-machine-radio/main/bootstrap_init.sh
 chmod +x bootstrap_init.sh
-./bootstrap_init.sh
-sudo ./bootstrap_main.sh
-
+sudo ./bootstrap_init.sh
 #!/bin/bash
 
 # Initial Bootstrap Script for Raspberry Pi Time Machine Radio
