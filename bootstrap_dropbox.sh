@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Dropbox Bootstrap Script for Raspberry Pi Time Machine Radio
 
 # Check if rclone is installed
@@ -16,6 +15,23 @@ else
     USERNAME=$1
 fi
 
+# Instructions for obtaining Dropbox access token
+echo "To obtain a Dropbox access token, follow these steps on another machine:"
+echo "1. Install rclone if not already installed (https://rclone.org/install/)"
+echo "2. Open a terminal and run: rclone config"
+echo "3. Choose 'n) New remote'"
+echo "4. Name it 'dropbox' (or any name you prefer)"
+echo "5. Choose 'Dropbox' as the storage type"
+echo "6. Leave the Dropbox App Key and Secret blank (press Enter)"
+echo "7. Answer 'n' to edit advanced config and 'y' to use auto config"
+echo "8. A browser window will open. Log in to Dropbox and authorize rclone"
+echo "9. Once authorized, return to the terminal and choose 'q' to quit config"
+echo "10. Run: rclone config show"
+echo "11. Find the 'token' value in the output. This is your Dropbox access token"
+echo ""
+echo "After obtaining the token, you can continue with this script."
+echo ""
+
 # Prompt for Dropbox access token
 read -p "Enter your Dropbox access token: " DROPBOX_TOKEN
 
@@ -26,11 +42,10 @@ chmod 600 /home/$USERNAME/.dropbox_token
 # Set up rclone
 echo "Setting up rclone for Dropbox..."
 mkdir -p /home/$USERNAME/.config/rclone
-
 cat << EOF > /home/$USERNAME/.config/rclone/rclone.conf
 [dropbox]
 type = dropbox
-token = {"access_token":"$DROPBOX_TOKEN","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}
+token = $DROPBOX_TOKEN
 EOF
 
 # Create sync script
@@ -49,5 +64,4 @@ echo "Setting up cron job for hourly sync..."
 # Run initial sync
 echo "Running initial Dropbox sync..."
 /home/$USERNAME/sync_dropbox.sh
-
 echo "Dropbox setup complete. Your radioTimeMachine folder will sync hourly."

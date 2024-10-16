@@ -60,25 +60,225 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 
 Note: The far counterclockwise position of each potentiometer acts as a switch, triggering specific actions like power on/off or decade changes.
 
-##  6. <a name='HardwareSetup'></a>Hardware Setup
+# Hardware Setup
+
+## Components
 
 - Raspberry Pi Zero 2 W
-- BossDAC (ALLO BOSS DAC PCM5122)
-- 2 potentiometers with built-in switches:
+- Innomaker Raspberry Pi HiFi DAC MINI HAT (PCM5122)
+- 2 rotary potentiometers with built-in switches:
   - Left potentiometer: Volume control and power on/off
   - Right potentiometer: Track selection and decade change
 - Speaker (connected to the DAC HAT)
+- ADC chip (MCP3008) for analog to digital conversion
 
-GPIO Connections:
-- Left Potentiometer:
-  - CLK: GPIO 17
-  - DT: GPIO 18
-  - SW: GPIO 27
-- Right Potentiometer:
-  - CLK: GPIO 22
-  - DT: GPIO 23
-  - SW: GPIO 24
+## GPIO Connections
 
+### 1. Left Potentiometer (Volume/Power)
+
+| Function | Description | Raspberry Pi Pin | GPIO Number |
+|----------|-------------|------------------|-------------|
+| VCC | Power supply for potentiometer | Pin 1 | 3.3V |
+| GND | Ground for potentiometer | Pin 6 | GND |
+| WIPER | Variable voltage output | Pin 7 | GPIO 4 (connects to ADC) |
+| SW1 | One side of the switch | Pin 13 | GPIO 27 |
+| SW2 | Other side of the switch | Pin 14 | GND |
+
+### 2. Right Potentiometer (Track/Decade)
+
+| Function | Description | Raspberry Pi Pin | GPIO Number |
+|----------|-------------|------------------|-------------|
+| VCC | Power supply for potentiometer | Pin 17 | 3.3V |
+| GND | Ground for potentiometer | Pin 20 | GND |
+| WIPER | Variable voltage output | Pin 29 | GPIO 5 (connects to ADC) |
+| SW1 | One side of the switch | Pin 18 | GPIO 24 |
+| SW2 | Other side of the switch | Pin 25 | GND |
+
+### 3. ADC Chip (MCP3008)
+
+| Function | Description | Raspberry Pi Pin | GPIO Number |
+|----------|-------------|------------------|-------------|
+| VDD | Power supply | Pin 1 | 3.3V |
+| VREF | Reference voltage | Pin 1 | 3.3V |
+| AGND | Analog ground | Pin 9 | GND |
+| CLK | SPI Clock | Pin 23 | GPIO 11 (SCLK) |
+| DOUT | Data Out (MISO) | Pin 21 | GPIO 9 (MISO) |
+| DIN | Data In (MOSI) | Pin 19 | GPIO 10 (MOSI) |
+| CS | Chip Select | Pin 24 | GPIO 8 (CE0) |
+| DGND | Digital ground | Pin 25 | GND |
+
+### 4. Innomaker HiFi DAC MINI HAT (PCM5122)
+
+The DAC HAT should be seated directly on the GPIO header of the Raspberry Pi Zero 2 W.
+
+It uses the following interfaces:
+
+#### I2S (Inter-IC Sound) Interface
+
+| Function | Description | Raspberry Pi Pin | GPIO Number |
+|----------|-------------|------------------|-------------|
+| PCM_CLK (BCLK) | Bit Clock for audio data transmission | Pin 12 | GPIO 18 |
+| PCM_FS (LRCLK) | Left/Right Clock for audio channel selection | Pin 35 | GPIO 19 |
+| PCM_DIN (Data in) | Data input for audio signal | Pin 38 | GPIO 20 |
+| PCM_DOUT (Data out) | Data output for audio signal | Pin 40 | GPIO 21 |
+
+#### I2C (Inter-Integrated Circuit) Interface (for control)
+
+| Function | Description | Raspberry Pi Pin | GPIO Number |
+|----------|-------------|------------------|-------------|
+| SDA (Serial Data) | Data line for I2C communication | Pin 3 | GPIO 2 |
+| SCL (Serial Clock) | Clock line for I2C communication | Pin 5 | GPIO 3 |
+
+### 5. Speaker
+
+Connect to the appropriate output terminals on the Innomaker DAC HAT. Refer to the DAC HAT documentation for specific terminal locations.
+
+## Important Notes for Python Script
+
+1. Initialize GPIO mode:
+   ```python
+   import RPi.GPIO as GPIO
+   GPIO.setmode(GPIO.BCM)
+   ```
+
+2. Set up switch GPIO pins with pull-up resistors:
+   ```python
+   GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Left potentiometer switch
+   GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Right potentiometer switch
+   ```
+
+3. Set up SPI for the MCP3008:
+   ```python
+   import spidev
+   spi = spidev.SpiDev()
+   spi.open(0, 0)  # Bus 0, Device 0
+   spi.max_speed_hz = 1000000  # 1MHz
+   ```
+
+4. Read analog values from MCP3008:
+   ```python
+   def read_adc(channel):
+       adc = spi.xfer2([1, (8 + channel) << 4, 0])
+       data = ((adc[1] & 3) << 8) + adc[2]
+       return data
+   
+   # Left potentiometer on channel 0, Right on channel 1
+   left_value = read_adc(0)
+   right_value = read_adc(1)
+   ```
+
+5. Implement debouncing for switches in your script to avoid false triggers.
+
+6. Remember to clean up GPIO on script exit:
+   ```python
+   GPIO.cleanup()
+   ```
+
+7. For the DAC HAT, you'll likely need to use specific audio libraries or system configurations. Refer to the Innomaker documentation for details on setting up audio output.
+
+## Dropbox Sync Structure
+
+The Time Machine Radio project uses Dropbox to sync music files to the Raspberry Pi, utilizing rclone for the synchronization process. This structure allows for a flexible organization of music into various categories, including decades and specific events.
+
+### Sync Folder Location
+
+The Dropbox sync folder on the Raspberry Pi is located at:
+
+```
+/home/[USERNAME]/audio
+```
+
+Where `[USERNAME]` is the username you provided during the setup process.
+
+### Dropbox Folder Structure
+
+In your Dropbox account, create a folder named `radioTimeMachine`. Inside this folder, create subfolders for each category you want. These can be decades, specific events, or any other categorization that fits your music collection. For example:
+
+```
+Dropbox/
+└── radioTimeMachine/
+    ├── 1950s/
+    │   ├── song1.mp3
+    │   ├── song2.mp3
+    │   └── ...
+    ├── 1960s/
+    │   ├── song1.mp3
+    │   ├── song2.mp3
+    │   └── ...
+    ├── Pearl Harbor/
+    │   ├── newsreel1.mp3
+    │   ├── song1.mp3
+    │   └── ...
+    ├── Summer of '69/
+    │   ├── song1.mp3
+    │   ├── song2.mp3
+    │   └── ...
+    └── ...
+```
+
+This structure will be mirrored in the `/home/[USERNAME]/audio` folder on your Raspberry Pi after syncing.
+
+### Sync Configuration
+
+1. The sync is managed by rclone, which is set up during the bootstrap process.
+2. A sync script is created at `/home/[USERNAME]/sync_dropbox.sh`.
+3. A cron job is set up to run this sync script hourly.
+
+### Important Notes for Python Script
+
+1. When initializing your Python script, set the base path for the music library:
+
+   ```python
+   import os
+   
+   USERNAME = os.getenv('USER')  # Gets the current username
+   MUSIC_LIBRARY_PATH = f"/home/{USERNAME}/audio"
+   ```
+
+2. To get a list of all categories:
+
+   ```python
+   categories = [d for d in os.listdir(MUSIC_LIBRARY_PATH) if os.path.isdir(os.path.join(MUSIC_LIBRARY_PATH, d))]
+   ```
+
+3. To get songs for a specific category:
+
+   ```python
+   def get_songs_for_category(category):
+       category_path = os.path.join(MUSIC_LIBRARY_PATH, category)
+       return [f for f in os.listdir(category_path) if f.endswith('.mp3')]
+   ```
+
+4. To handle the flexible structure in your main script:
+
+   ```python
+   def select_category(potentiometer_value):
+       # Map potentiometer value to category index
+       index = int(potentiometer_value / (1024 / len(categories)))
+       return categories[index]
+
+   def play_from_category(category):
+       songs = get_songs_for_category(category)
+       if songs:
+           # Logic to select and play a song from the category
+           pass
+       else:
+           print(f"No songs found in category: {category}")
+   ```
+
+5. Your script should handle cases where the sync might be in progress or where a category folder might be empty.
+
+6. The sync occurs hourly, so your script might need to refresh its category and file lists periodically to catch any new additions.
+
+### Manual Sync
+
+If you need to manually trigger a sync, you can run:
+
+```bash
+/home/[USERNAME]/sync_dropbox.sh
+```
+
+This will sync the `radioTimeMachine` folder from your Dropbox to the `/home/[USERNAME]/audio` folder on your Raspberry Pi.
 
 ###  9.4. <a name='SettingUpaVirtualEnvironment'></a>Setting Up a Virtual Environment
 
