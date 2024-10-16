@@ -60,60 +60,6 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 
 Note: The far counterclockwise position of each potentiometer acts as a switch, triggering specific actions like power on/off or decade changes.
 
-##  3. <a name='RepositoryStructure'></a>Repository Structure
-
-```
-raspberry-pi-2-w-time-machine-radio/
-│
-├── .github/workflows/
-│   ├── docker-publish.yml
-│   └── validate-package.yml
-│
-├── src/
-│   └── main.py
-│
-├── Dockerfile
-├── requirements.txt
-└── README.md
-```
-
-- `src/main.py`: Core application logic
-- `Dockerfile`: Defines the container for both development and production
-- `requirements.txt`: Lists Python dependencies
-
-##  4. <a name='LocalDevelopment'></a>Local Development
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/ekbrothers/raspberry-pi-2-w-time-machine-radio.git
-   cd raspberry-pi-2-w-time-machine-radio
-   ```
-
-2. Build the Docker image:
-   ```
-   docker build -t time-machine-radio .
-   ```
-
-3. Run the container:
-   ```
-   docker run -it --rm time-machine-radio
-   ```
-
-This setup allows for development on non-Raspberry Pi systems by mocking GPIO functionality.
-
-##  5. <a name='Workflows'></a>Workflows
-
-1. `docker-publish.yml`:
-   - Triggers on push to main branch
-   - Builds multi-architecture Docker image (amd64, arm/v7, arm64)
-   - Pushes image to GitHub Container Registry
-
-2. `validate-package.yml`:
-   - Runs after successful `docker-publish` workflow
-   - Pulls the newly built image
-   - Validates image contents and installed packages
-   - Ensures the container starts successfully
-
 ##  6. <a name='HardwareSetup'></a>Hardware Setup
 
 - Raspberry Pi Zero 2 W
@@ -132,219 +78,6 @@ GPIO Connections:
   - CLK: GPIO 22
   - DT: GPIO 23
   - SW: GPIO 24
-
-The BossDAC should be properly seated on the Raspberry Pi's GPIO pins.
-
-
-# Docker Setup on Raspberry Pi
-
-To set up Docker and run the Time Machine Radio on your Raspberry Pi, follow these steps:
-
-1. Update your Raspberry Pi:
-   ```
-   sudo apt update
-   sudo apt upgrade -y
-   ```
-
-2. Install Docker dependencies:
-   ```
-   sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
-   ```
-
-3. Add Docker's official GPG key:
-   ```
-   curl -fsSL https://download.docker.com/linux/raspbian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-   ```
-
-4. Set up the Docker repository:
-   ```
-   echo "deb [arch=armhf signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/raspbian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-   ```
-
-5. Install Docker:
-   ```
-   sudo apt update
-   sudo apt install -y docker-ce docker-ce-cli containerd.io
-   ```
-
-6. Add your user to the Docker group (log out and back in after this step):
-   ```
-   sudo usermod -aG docker $USER
-   ```
-
-7. Verify Docker installation:
-   ```
-   docker --version
-   ```
-
-8. Authenticate with GitHub Container Registry:
-   - Create a Personal Access Token (PAT) on GitHub with the appropriate permissions (read:packages).
-   - Log in to ghcr.io using your GitHub username and PAT:
-     ```
-     echo YOUR_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
-     ```
-   Replace YOUR_PAT with your actual Personal Access Token and YOUR_GITHUB_USERNAME with your GitHub username.
-
-9. Pull the latest Time Machine Radio image:
-   ```
-   docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-   ```
-
-10. Run the Time Machine Radio container:
-    ```
-    docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-    ```
-
-Make sure your audio files are organized in `/home/pi/audio` with subdirectories for each decade before running the container.
-
-Note: Keep your Personal Access Token secure and never share it publicly. If you're distributing this project to others, you may want to consider making the container registry public or providing separate instructions for requesting access.
-
-##  7. <a name='Deployment'></a>Deployment
-
-To deploy on your Raspberry Pi:
-
-1. Pull the latest image:
-   ```
-   docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-   ```
-
-2. Run the container:
-   ```
-   docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-   ```
-
-Ensure your audio files are organized in `/home/pi/audio` with subdirectories for each decade.
-
-##  8. <a name='SpecifyingtheCorrectAudioDeviceinPython'></a>Specifying the Correct Audio Device in Python
-
-When working with the BossDAC or any specific audio device on your Raspberry Pi, it's crucial to specify the correct device in your Python script. Here's how to do it:
-
-1. **Identify Available Devices**: 
-   Use the following Python script to list all available audio devices:
-
-   ```python
-   import sounddevice as sd
-
-   print("Available audio devices:")
-   print(sd.query_devices())
-   ```
-
-2. **Specify the Device**:
-   Once you've identified your DAC (usually listed as "BossDAC" or similar), you can specify it in your script using its index or name:
-
-   ```python
-   import sounddevice as sd
-   import numpy as np
-
-   # Specify the audio device to use (replace 0 with the correct index if different)
-   device = 0  # or use the name, e.g., device = "BossDAC"
-
-   # Your audio data and sample rate
-   data = ...  # Your audio data
-   samplerate = 44100  # or whatever is appropriate for your audio
-
-   # Play audio
-   sd.play(data, samplerate, device=device)
-   sd.wait()
-   ```
-
-3. **Handle Device Selection Errors**:
-   It's good practice to handle potential errors when selecting the device:
-
-   ```python
-   try:
-       sd.play(data, samplerate, device=device)
-       sd.wait()
-   except sd.PortAudioError as e:
-       print(f"Error playing audio: {e}")
-       print("Available devices:")
-       print(sd.query_devices())
-   ```
-
-4. **Using with Other Libraries**:
-   If you're using libraries like `pygame` for audio, you may need to set the audio device before initializing:
-
-   ```python
-   import os
-   os.environ['SDL_AUDIODRIVER'] = 'alsa'
-   os.environ['AUDIODEV'] = 'plughw:1,0'  # Replace with your device identifier if different
-
-   import pygame
-   pygame.mixer.init()
-   ```
-
-Remember to install the necessary Python libraries (`sounddevice`, `numpy`) in your project's virtual environment:
-
-```bash
-pip install sounddevice numpy
-```
-##  9. <a name='DevelopmentandTestingStages'></a>Development and Testing Stages
-
-When developing the Time Machine Radio project, it's important to balance speed of development with the robustness of your testing environment. Here's a recommended approach that progresses from rapid local development to full containerization:
-
-###  9.1. <a name='LocalPythonDevelopmentonRaspberryPi'></a>1. Local Python Development on Raspberry Pi
-
-**Fastest for initial development and debugging**
-
-- Develop and test Python scripts directly on the Raspberry Pi.
-- Use a virtual environment to manage dependencies.
-- Pros:
-  - Immediate feedback
-  - Direct access to hardware (GPIO, DAC)
-  - Easiest to debug hardware interactions
-- Cons:
-  - Less portable
-  - Potential for environment inconsistencies
-
-Example workflow:
-```bash
-cd ~/time_machine_radio
-source venv/bin/activate
-python your_script.py
-```
-
-###  9.2. <a name='LocalContainerBuildonRaspberryPi'></a>2. Local Container Build on Raspberry Pi
-
-**Good balance of speed and environment consistency**
-
-- Build Docker container on the Raspberry Pi itself.
-- Test the containerized application locally.
-- Pros:
-  - Faster than pulling from remote registry
-  - Tests containerization without network dependency
-  - Closer to production environment
-- Cons:
-  - Slower than direct Python development
-  - May not catch architecture-specific issues
-
-Example workflow:
-```bash
-docker build -t time-machine-radio .
-docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio time-machine-radio
-```
-
-###  9.3. <a name='FullCICDPipelinewithRemoteContainerRegistry'></a>3. Full CI/CD Pipeline with Remote Container Registry
-
-**Best for final testing and deployment**
-
-- Push changes to GitHub repository.
-- Allow CI/CD pipeline to build and push container to GitHub Container Registry.
-- Pull and run the container on Raspberry Pi.
-- Pros:
-  - Full test of entire workflow
-  - Ensures consistency across different devices
-  - Mimics the final deployment process
-- Cons:
-  - Slowest development cycle
-  - Requires network connectivity
-
-Example workflow:
-```bash
-# After pushing changes to GitHub and CI/CD completes
-docker pull ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbrothers/raspberry-pi-2-w-time-machine-radio:latest
-```
-
 
 
 ###  9.4. <a name='SettingUpaVirtualEnvironment'></a>Setting Up a Virtual Environment
@@ -384,27 +117,115 @@ docker run --device /dev/snd:/dev/snd -v /home/pi/audio:/app/audio ghcr.io/ekbro
    deactivate
    ```
 
-###  9.5. <a name='ManagingDependencies'></a>Managing Dependencies
 
-- **Freeze requirements**: After installing all necessary packages, create or update your `requirements.txt`:
-  ```bash
-  pip freeze > requirements.txt
-  ```
+# Raspberry Pi Time Machine Radio Provisioning Guide
 
-- **Install from requirements**: To recreate the environment on another machine or after a fresh clone:
-  ```bash
-  pip install -r requirements.txt
-  ```
+This guide will walk you through the process of setting up your Raspberry Pi for the Time Machine Radio project using our custom bootstrap scripts.
 
-###  9.6. <a name='BestPractices'></a>Best Practices
+## Prerequisites
 
-- Always activate your virtual environment before working on your project.
-- Keep your `requirements.txt` file up to date.
-- Don't version control your `venv` directory; add it to your `.gitignore` file.
-- If you're using an IDE like PyCharm or VS Code, configure it to use your virtual environment.
+- Raspberry Pi (preferably Raspberry Pi Zero 2 W)
+- SD card with fresh Raspberry Pi OS installation
+- Internet connection
+- Dropbox account and access token (for music syncing)
 
-###  9.7. <a name='Troubleshooting'></a>Troubleshooting
+## Getting Started
 
-- If you encounter permissions issues, ensure you're not using `sudo` with pip inside a virtual environment.
-- If you're having trouble with audio or GPIO libraries, make sure they're compiled for your specific Raspberry Pi architecture.
+1. **Boot your Raspberry Pi**:
+   - Insert the SD card with Raspberry Pi OS into your Raspberry Pi.
+   - Connect power and wait for it to boot.
 
+2. **Initial Setup**:
+   - Complete the initial Raspberry Pi setup (set password, configure Wi-Fi, etc.).
+   - Open a terminal window.
+
+3. **Download the Initial Bootstrap Script**:
+   Run the following command to download the initial bootstrap script:
+   ```bash
+   curl -O https://raw.githubusercontent.com/ekbrothers/raspberry-pi-2-w-time-machine-radio/main/bootstrap_init.sh
+   chmod +x bootstrap_init.sh
+   ```
+
+4. **Run the Initial Bootstrap Script**:
+   Execute the script to download all other necessary scripts:
+   ```bash
+   ./bootstrap_init.sh
+   ```
+   This script will download:
+   - bootstrap_main.sh
+   - bootstrap_system.sh
+   - bootstrap_dropbox.sh
+   - bootstrap_python.sh
+   - bootstrap_audio.sh
+   - bootstrap_service.sh
+
+5. **Run the Main Bootstrap Script**:
+   After the initial script completes, run the main bootstrap script:
+   ```bash
+   sudo ./bootstrap_main.sh
+   ```
+   This script will:
+   - Prompt for your Raspberry Pi username
+   - Run all other bootstrap scripts in the correct order
+   - Reboot the Raspberry Pi when setup is complete
+
+6. **Follow Prompts**:
+   During the execution of the scripts, you may be prompted for additional information:
+   - Your Raspberry Pi username (if not already provided)
+   - Your Dropbox access token (for music syncing)
+
+## What the Scripts Do
+
+- **bootstrap_system.sh**: Updates the system and installs necessary packages.
+- **bootstrap_dropbox.sh**: Sets up rclone for Dropbox syncing and creates a sync script and cron job.
+- **bootstrap_python.sh**: Clones the project repository and sets up a Python virtual environment.
+- **bootstrap_audio.sh**: Configures audio settings for the DAC (Digital-to-Analog Converter).
+- **bootstrap_service.sh**: Creates and enables a system service for the Time Machine Radio.
+
+## After Setup
+
+Once the setup is complete and your Raspberry Pi has rebooted:
+
+1. The Time Machine Radio service should start automatically.
+2. Your Dropbox "radioTimeMachine" folder will sync hourly to `/home/your_username/audio`.
+3. You can check the status of the service by running:
+   ```bash
+   sudo systemctl status time_machine_radio.service
+   ```
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Check the system logs:
+   ```bash
+   journalctl -u time_machine_radio.service
+   ```
+
+2. Verify that all scripts were executed successfully by checking for any error messages in the terminal output.
+
+3. Ensure your Dropbox token is correct and that the "radioTimeMachine" folder exists in your Dropbox.
+
+4. If you have audio issues, make sure your DAC is properly connected and recognized by the system.
+
+## Manual Adjustments
+
+You may need to make manual adjustments depending on your specific hardware setup or requirements. Refer to the individual script contents for details on what each script does and where you might need to make changes.
+
+## Updating the Project
+
+To update the project in the future:
+
+1. Navigate to the project directory:
+   ```bash
+   cd /home/your_username/time_machine_radio
+   ```
+
+2. Pull the latest changes:
+   ```bash
+   git pull origin main
+   ```
+
+3. Rerun the bootstrap scripts if necessary, or manually apply any new configuration changes.
+
+Remember to replace `your_username` with your actual Raspberry Pi username in all paths and commands.
