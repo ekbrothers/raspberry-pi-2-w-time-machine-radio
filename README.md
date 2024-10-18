@@ -35,30 +35,56 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 - [Setting up the BossDAC](#setting-up-the-bossdac)
 - [Deployment](#deployment)
 
-##  2. <a name='UserInteractions'></a>User Interactions
+# Raspberry Pi Time Machine Radio
 
-1. **Power On/Off**: 
-   - Turn the left potentiometer to its far counterclockwise position to toggle the power state of the radio.
+This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, allowing users to explore music from different decades using potentiometers for control.
 
-2. **Volume Adjustment**:
-   - Rotate the left potentiometer clockwise from its starting position to increase volume.
-   - Rotate the left potentiometer counterclockwise (but not to the far end) to decrease volume.
+## Table of Contents
 
-3. **Decade Selection** (when powered off):
-   - Rotate the right potentiometer to cycle through tracks within each decade.
-   - Turn the right potentiometer to its far counterclockwise position and then back to change the decade.
+1. [User Interactions](#user-interactions)
+2. [Hardware Setup](#hardware-setup)
+3. [Dropbox Sync and Folder Structure](#dropbox-sync-and-folder-structure)
+4. [Software Implementation](#software-implementation)
 
-4. **Track Navigation** (when powered on):
-   - Rotate the right potentiometer clockwise to move to the next track.
-   - Rotate the right potentiometer counterclockwise (but not to the far end) to move to the previous track.
+## User Interactions
 
-5. **Change Decade** (when powered on):
-   - Turn the right potentiometer to its far counterclockwise position and then turn clockwise again to change the decade, triggering the "time travel" effect.
+1. **Playback On/Off**:
+   - Press the switch on the left potentiometer (turn to far counterclockwise position) to toggle the playback state of the radio.
+   - When turned on, the radio will start playing a track from the currently selected decade or event.
+   - When turned off, all playback will stop, but the Raspberry Pi remains operational.
 
-6. **Time Travel Effect**:
-   - When changing decades (following the process in step 5), a special audio and/or visual effect will be triggered to enhance the "time travel" experience.
+2. **Volume Control**:
+   - Rotate the left potentiometer to adjust the volume.
+   - Turning clockwise increases the volume, while turning counterclockwise decreases it.
+   - The high-resolution ADC allows for fine-grained volume control.
 
-Note: The far counterclockwise position of each potentiometer acts as a switch, triggering specific actions like power on/off or decade changes.
+3. **Track Selection**:
+   - Rotate the right potentiometer to select a track within the current decade or event.
+   - Tracks are arranged in alphabetical order from left to right.
+   - As you rotate the potentiometer, the radio will automatically switch to the selected track and begin playback.
+
+4. **Decade/Event Selection**:
+   - To change the decade or historical event, turn the right potentiometer to its far counterclockwise position to activate the built-in switch.
+   - Each time you turn to this position and then release (turn slightly clockwise), you'll move to the next decade/event in chronological order.
+   - The sequence of actions is:
+     1. Turn fully counterclockwise (switch activates)
+     2. Turn slightly clockwise (switch deactivates)
+     3. Decade/event changes
+   - After reaching the most recent decade/event, it will cycle back to the earliest one.
+   - The radio will automatically start playing a track from the newly selected decade/event.
+   - Note: Be careful not to turn the potentiometer too far clockwise when releasing, as this might inadvertently select a different track within the new decade/event.
+
+5. **Continuous Playback**:
+   - Once a track is playing, it will continue until you change the track, change the decade/event, or turn off playback.
+   - There is no need to hold the potentiometer in position; the track will play to completion unless interrupted.
+
+6. **Fine-Tuning**:
+   - Both volume and track selection are sensitive to small movements of the potentiometers, allowing for precise control.
+   - The ADS1115 ADC provides 65,536 distinct values for each potentiometer, enabling very fine adjustments.
+
+7. **Time Travel Experience**:
+   - When you change decades or events by activating the right potentiometer switch, the transition creates a "time travel" effect.
+   - This effect is achieved through the immediate change in music style and era as you move between different time periods or historical events.
 
 # Hardware Setup
 
@@ -70,7 +96,7 @@ Note: The far counterclockwise position of each potentiometer acts as a switch, 
   - Left potentiometer: Volume control and power on/off
   - Right potentiometer: Track selection and decade change
 - Speaker (connected to the DAC HAT)
-- ADC chip (MCP3008) for analog to digital conversion
+- ADS1115 16-Bit ADC
 
 ## GPIO Connections
 
@@ -80,7 +106,7 @@ Note: The far counterclockwise position of each potentiometer acts as a switch, 
 |----------|-------------|------------------|-------------|
 | VCC | Power supply for potentiometer | Pin 1 | 3.3V |
 | GND | Ground for potentiometer | Pin 6 | GND |
-| WIPER | Variable voltage output | Pin 7 | GPIO 4 (connects to ADC) |
+| WIPER | Variable voltage output | - | Connects to ADS1115 A0 |
 | SW1 | One side of the switch | Pin 13 | GPIO 27 |
 | SW2 | Other side of the switch | Pin 14 | GND |
 
@@ -88,24 +114,22 @@ Note: The far counterclockwise position of each potentiometer acts as a switch, 
 
 | Function | Description | Raspberry Pi Pin | GPIO Number |
 |----------|-------------|------------------|-------------|
-| VCC | Power supply for potentiometer | Pin 17 | 3.3V |
-| GND | Ground for potentiometer | Pin 20 | GND |
-| WIPER | Variable voltage output | Pin 29 | GPIO 5 (connects to ADC) |
+| VCC | Power supply for potentiometer | Pin 1 | 3.3V |
+| GND | Ground for potentiometer | Pin 6 | GND |
+| WIPER | Variable voltage output | - | Connects to ADS1115 A1 |
 | SW1 | One side of the switch | Pin 18 | GPIO 24 |
 | SW2 | Other side of the switch | Pin 25 | GND |
 
-### 3. ADC Chip (MCP3008)
+### 3. ADS1115 ADC
 
 | Function | Description | Raspberry Pi Pin | GPIO Number |
 |----------|-------------|------------------|-------------|
 | VDD | Power supply | Pin 1 | 3.3V |
-| VREF | Reference voltage | Pin 1 | 3.3V |
-| AGND | Analog ground | Pin 9 | GND |
-| CLK | SPI Clock | Pin 23 | GPIO 11 (SCLK) |
-| DOUT | Data Out (MISO) | Pin 21 | GPIO 9 (MISO) |
-| DIN | Data In (MOSI) | Pin 19 | GPIO 10 (MOSI) |
-| CS | Chip Select | Pin 24 | GPIO 8 (CE0) |
-| DGND | Digital ground | Pin 25 | GND |
+| GND | Ground | Pin 6 | GND |
+| SCL | I2C Clock | Pin 5 | GPIO 3 (SCL) |
+| SDA | I2C Data | Pin 3 | GPIO 2 (SDA) |
+| A0 | Analog Input 0 | - | Left Potentiometer Wiper |
+| A1 | Analog Input 1 | - | Right Potentiometer Wiper |
 
 ### 4. Innomaker HiFi DAC MINI HAT (PCM5122)
 
@@ -133,48 +157,181 @@ It uses the following interfaces:
 
 Connect to the appropriate output terminals on the Innomaker DAC HAT. Refer to the DAC HAT documentation for specific terminal locations.
 
-## Important Notes for Python Script
+## Considerations and Lessons Learned
 
-1. Initialize GPIO mode:
-   ```python
-   import RPi.GPIO as GPIO
-   GPIO.setmode(GPIO.BCM)
-   ```
+1. Debouncing is crucial for the switches to prevent unintended multiple triggers.
+2. The ADS1115 provides much more precise readings than direct GPIO analog input.
+3. Proper grounding and power supply connections are essential for stable ADC readings.
+4. The I2C bus is shared between the DAC HAT and the ADS1115, so care must be taken to avoid address conflicts.
+5. Regular logging helps in diagnosing issues and understanding the system's behavior.
 
-2. Set up switch GPIO pins with pull-up resistors:
-   ```python
-   GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Left potentiometer switch
-   GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Right potentiometer switch
-   ```
+## Most Recent Working Script
 
-3. Set up SPI for the MCP3008:
-   ```python
-   import spidev
-   spi = spidev.SpiDev()
-   spi.open(0, 0)  # Bus 0, Device 0
-   spi.max_speed_hz = 1000000  # 1MHz
-   ```
+Here's the most recent working script for the Time Machine Radio:
 
-4. Read analog values from MCP3008:
-   ```python
-   def read_adc(channel):
-       adc = spi.xfer2([1, (8 + channel) << 4, 0])
-       data = ((adc[1] & 3) << 8) + adc[2]
-       return data
-   
-   # Left potentiometer on channel 0, Right on channel 1
-   left_value = read_adc(0)
-   right_value = read_adc(1)
-   ```
+```python
+import RPi.GPIO as GPIO
+import time
+import os
+import random
+import logging
+from typing import List, Optional
+import pygame
+import board
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
+from contextlib import contextmanager
 
-5. Implement debouncing for switches in your script to avoid false triggers.
+# Configuration
+MUSIC_LIBRARY_PATH = "/home/ekbro/audio"
+LOG_FILE = "/home/ekbro/time_machine_radio.log"
+LEFT_SWITCH_PIN = 27
+RIGHT_SWITCH_PIN = 24
+DEBOUNCE_TIME = 0.3
 
-6. Remember to clean up GPIO on script exit:
-   ```python
-   GPIO.cleanup()
-   ```
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
 
-7. For the DAC HAT, you'll likely need to use specific audio libraries or system configurations. Refer to the Innomaker documentation for details on setting up audio output.
+class TimeMachineRadio:
+    def __init__(self):
+        self.current_decade: Optional[str] = None
+        self.current_track: Optional[str] = None
+        self.is_playing: bool = False
+        self.decades: List[str] = []
+        self.last_switch_time = {LEFT_SWITCH_PIN: 0, RIGHT_SWITCH_PIN: 0}
+
+        # GPIO Setup
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(LEFT_SWITCH_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(RIGHT_SWITCH_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+        # ADC Setup
+        i2c = busio.I2C(board.SCL, board.SDA)
+        ads = ADS.ADS1115(i2c)
+        self.pot_left = AnalogIn(ads, ADS.P0)
+        self.pot_right = AnalogIn(ads, ADS.P1)
+
+        # Audio setup
+        pygame.mixer.init()
+
+    def load_decades(self) -> None:
+        try:
+            self.decades = [d for d in os.listdir(MUSIC_LIBRARY_PATH) if os.path.isdir(os.path.join(MUSIC_LIBRARY_PATH, d))]
+            self.decades.sort()
+            logging.info(f"Loaded decades: {self.decades}")
+        except Exception as e:
+            logging.error(f"Error loading decades: {e}")
+            self.decades = []
+
+    def get_decade(self) -> Optional[str]:
+        if not self.decades:
+            return None
+        pot_value = self.pot_right.value
+        index = int(pot_value / (65536 / len(self.decades)))
+        return self.decades[min(index, len(self.decades) - 1)]
+
+    def get_track(self, decade: str) -> Optional[str]:
+        tracks = [f for f in os.listdir(os.path.join(MUSIC_LIBRARY_PATH, decade)) if f.endswith('.mp3')]
+        if not tracks:
+            return None
+        pot_value = self.pot_left.value
+        index = int(pot_value / (65536 / len(tracks)))
+        return tracks[min(index, len(tracks) - 1)]
+
+    def play_track(self, decade: str, track: str) -> None:
+        self.current_decade = decade
+        self.current_track = track
+        track_path = os.path.join(MUSIC_LIBRARY_PATH, decade, track)
+        try:
+            pygame.mixer.music.load(track_path)
+            pygame.mixer.music.play()
+            self.is_playing = True
+            logging.info(f"Now playing: {track} from {decade}")
+        except Exception as e:
+            logging.error(f"Error playing track {track}: {e}")
+
+    def stop_playback(self) -> None:
+        pygame.mixer.music.stop()
+        self.is_playing = False
+        logging.info("Playback stopped")
+
+    def debounced_switch(self, pin: int) -> bool:
+        current_time = time.time()
+        if current_time - self.last_switch_time[pin] > DEBOUNCE_TIME:
+            self.last_switch_time[pin] = current_time
+            return GPIO.input(pin) == GPIO.LOW
+        return False
+
+    @contextmanager
+    def gpio_cleanup(self):
+        try:
+            yield
+        finally:
+            GPIO.cleanup()
+            pygame.mixer.quit()
+            logging.info("GPIO cleaned up and mixer quit")
+
+    def run(self) -> None:
+        logging.info("Time Machine Radio starting up...")
+        self.load_decades()
+        if not self.decades:
+            logging.error("No decades found in the music library!")
+            return
+
+        with self.gpio_cleanup():
+            try:
+                last_decade = None
+                last_track = None
+                while True:
+                    left_switch = self.debounced_switch(LEFT_SWITCH_PIN)
+                    right_switch = self.debounced_switch(RIGHT_SWITCH_PIN)
+
+                    if left_switch:
+                        if self.is_playing:
+                            self.stop_playback()
+                        else:
+                            decade = self.get_decade()
+                            if decade:
+                                track = self.get_track(decade)
+                                if track:
+                                    self.play_track(decade, track)
+                        time.sleep(0.5)
+
+                    if self.is_playing:
+                        decade = self.get_decade()
+                        if decade != last_decade:
+                            track = self.get_track(decade)
+                            if track:
+                                self.play_track(decade, track)
+                            last_decade = decade
+                            last_track = track
+                        else:
+                            track = self.get_track(decade)
+                            if track != last_track:
+                                self.play_track(decade, track)
+                                last_track = track
+
+                    time.sleep(0.1)
+
+            except KeyboardInterrupt:
+                logging.info("Time Machine Radio shutting down...")
+            except Exception as e:
+                logging.exception(f"An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    radio = TimeMachineRadio()
+    radio.run()
+```
+
+This script incorporates the ADS1115 for precise potentiometer readings and implements debouncing for the switches. It provides a smooth experience for selecting decades and tracks using the potentiometers while maintaining the power on/off functionality with the left switch.
 
 ## Dropbox Sync Structure
 
