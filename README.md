@@ -89,18 +89,17 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 # Hardware Setup
 
 ## Components
-
 - Raspberry Pi Zero 2 W
 - Innomaker Raspberry Pi HiFi DAC MINI HAT (PCM5122)
 - 2 rotary potentiometers with built-in switches:
-  - Left potentiometer: Volume control and power on/off
+  - Left potentiometer: Volume control and playback on/off
   - Right potentiometer: Track selection and decade change
 - Speaker (connected to the DAC HAT)
 - ADS1115 16-Bit ADC
 
 ## GPIO Connections
 
-### 1. Left Potentiometer (Volume/Power)
+### 1. Left Potentiometer (Volume/Playback)
 
 | Function | Description | Raspberry Pi Pin | GPIO Number |
 |----------|-------------|------------------|-------------|
@@ -122,19 +121,20 @@ This project implements a time-traveling radio using a Raspberry Pi Zero 2 W, al
 
 ### 3. ADS1115 ADC
 
-| Function | Description | Raspberry Pi Pin | GPIO Number |
-|----------|-------------|------------------|-------------|
-| VDD | Power supply | Pin 1 | 3.3V |
-| GND | Ground | Pin 6 | GND |
-| SCL | I2C Clock | Pin 5 | GPIO 3 (SCL) |
-| SDA | I2C Data | Pin 3 | GPIO 2 (SDA) |
-| A0 | Analog Input 0 | - | Left Potentiometer Wiper |
-| A1 | Analog Input 1 | - | Right Potentiometer Wiper |
+| Function | Description | ADS1115 Pin | Raspberry Pi Pin | GPIO Number |
+|----------|-------------|-------------|------------------|-------------|
+| VDD | Power supply | VDD | Pin 1 | 3.3V |
+| GND | Ground | GND | Pin 6 | GND |
+| SCL | I2C Clock | SCL | Pin 5 | GPIO 3 (SCL) |
+| SDA | I2C Data | SDA | Pin 3 | GPIO 2 (SDA) |
+| A0 | Analog Input 0 | A0 | - | Left Potentiometer Wiper |
+| A1 | Analog Input 1 | A1 | - | Right Potentiometer Wiper |
+| ADDR | Address Pin | ADDR | - | Connect to GND for default address |
+| ALRT | Alert | ALRT | - | Not used in this setup |
 
 ### 4. Innomaker HiFi DAC MINI HAT (PCM5122)
 
 The DAC HAT should be seated directly on the GPIO header of the Raspberry Pi Zero 2 W.
-
 It uses the following interfaces:
 
 #### I2S (Inter-IC Sound) Interface
@@ -152,6 +152,10 @@ It uses the following interfaces:
 |----------|-------------|------------------|-------------|
 | SDA (Serial Data) | Data line for I2C communication | Pin 3 | GPIO 2 |
 | SCL (Serial Clock) | Clock line for I2C communication | Pin 5 | GPIO 3 |
+
+### 5. Speaker
+
+Connect to the appropriate output terminals on the Innomaker DAC HAT. Refer to the DAC HAT documentation for specific terminal locations.
 
 ### 5. Speaker
 
